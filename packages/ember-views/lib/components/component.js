@@ -3,6 +3,7 @@ import { assert, deprecate } from 'ember-metal/debug';
 
 import TargetActionSupport from 'ember-runtime/mixins/target_action_support';
 import View from 'ember-views/views/view';
+import { instrument } from 'ember-routing-htmlbars/system/instrumentation_support';
 
 import { get } from 'ember-metal/property_get';
 import { set } from 'ember-metal/property_set';
@@ -305,7 +306,9 @@ var Component = View.extend(TargetActionSupport, {
     var hasAction = this.actions && this.actions[actionName];
 
     if (hasAction) {
-      var shouldBubble = this.actions[actionName].apply(this, args) === true;
+      var shouldBubble = instrument(actionName, function component_action_instrument() {
+        return this.actions[actionName].apply(this, args) === true;
+      }, this, args);
       if (!shouldBubble) { return; }
     }
 

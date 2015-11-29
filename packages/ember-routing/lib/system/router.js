@@ -19,6 +19,7 @@ import {
   calculateCacheKey
 } from 'ember-routing/utils';
 import RouterState from './router_state';
+import { instrument } from 'ember-routing-htmlbars/system/instrumentation_support';
 
 /**
 @module ember
@@ -857,12 +858,17 @@ function triggerEvent(handlerInfos, ignoreFailure, args) {
   var eventWasHandled = false;
   var handlerInfo, handler;
 
+  function instrumentActionCallback() {
+    return this.actions[name].apply(this, args);
+  }
+
   for (var i = handlerInfos.length - 1; i >= 0; i--) {
     handlerInfo = handlerInfos[i];
     handler = handlerInfo.handler;
 
     if (handler.actions && handler.actions[name]) {
-      if (handler.actions[name].apply(handler, args) === true) {
+      var shouldBubble = instrument(name, instrumentActionCallback, handler);
+      if (shouldBubble) {
         eventWasHandled = true;
       } else {
         return;

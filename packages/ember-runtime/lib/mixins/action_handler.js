@@ -6,6 +6,7 @@
 import { assert, deprecate } from 'ember-metal/debug';
 import { Mixin } from 'ember-metal/mixin';
 import { get } from 'ember-metal/property_get';
+import { instrument } from 'ember-routing-htmlbars/system/instrumentation_support';
 
 /**
   `Ember.ActionHandler` is available on some familiar classes including
@@ -176,7 +177,9 @@ var ActionHandler = Mixin.create({
     var target;
 
     if (this.actions && this.actions[actionName]) {
-      var shouldBubble = this.actions[actionName].apply(this, args) === true;
+      var shouldBubble = instrument(actionName, function actionHandler_action_instrument() {
+        return this.actions[actionName].apply(this, args) === true;
+      }, this, args);
       if (!shouldBubble) { return; }
     }
 

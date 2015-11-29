@@ -8,6 +8,7 @@ import { get } from 'ember-metal/property_get';
 import { labelForSubexpr } from 'ember-htmlbars/hooks/subexpr';
 import EmberError from 'ember-metal/error';
 import run from 'ember-metal/run_loop';
+import { instrument } from 'ember-routing-htmlbars/system/instrumentation_support';
 
 export const INVOKE = symbol('INVOKE');
 export const ACTION = symbol('ACTION');
@@ -80,7 +81,9 @@ function createClosureAction(target, action, valuePath, actionArguments) {
         args[0] = get(args[0], valuePath);
       }
 
-      return run.join(target, action, ...args);
+      return instrument(action, function() {
+        return run.join(target, action, ...args);
+      }, target, args);
     };
   } else {
     closureAction = function(...args) {
@@ -88,7 +91,9 @@ function createClosureAction(target, action, valuePath, actionArguments) {
         args[0] = get(args[0], valuePath);
       }
 
-      return run.join(target, action, ...args);
+      return instrument(action, function() {
+        return run.join(target, action, ...args);
+      }, target);
     };
   }
 
